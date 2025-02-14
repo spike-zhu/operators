@@ -61,4 +61,17 @@ void use_mudnn(std::shared_ptr<Pool<musa::dnn::Handle>> mudnn_handles_t, int dev
     mudnn_handles_t->push(handle);
 }
 
+
+// template<typename T>
+// musa::dnn::Status use_mudnn(std::shared_ptr<Pool<musa::dnn::Handle>> mudnn_handles_t, int device_id, musaStream_t stream, T const &f) {
+//     auto handle = mudnn_handles_t->pop();
+//     if (!handle) {
+//         musaSetDevice(device_id);
+//         handle = std::make_shared<musa::dnn::Handle>(device_id);
+//     }
+//     musa::dnn::Status status = f(*handle);
+//     mudnn_handles_t->push(std::move(handle));
+//     return status;
+// }
+
 #endif // __MUSA_HANDLE_H__

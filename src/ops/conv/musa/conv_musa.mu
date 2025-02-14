@@ -8,12 +8,13 @@ infiniopStatus_t conv_mt_gpu(ConvMusaDescriptor_t desc, void *workspace, uint64_
     desc->y_tensor->SetAddr(y);
     desc->x_tensor->SetAddr(x);
     desc->w_tensor->SetAddr(w);
-    printf("b\n");
 
     use_mudnn(desc->mudnn_handles_t, desc->device_id, (musaStream_t) stream, [&](musa::dnn::Handle* handle) {
-        desc->conv_operator->Run(*handle, *(desc->y_tensor), *(desc->x_tensor), *(desc->w_tensor), desc->algo, nullptr);
-
+        desc->conv_operator->Run(*handle, *(desc->y_tensor), *(desc->x_tensor), *(desc->w_tensor), desc->algo, desc->maintainer);
     });
+
+    printf("[SUCCESS to execute conv_mt_gpu]\n");
+
     return STATUS_SUCCESS;
 }
 

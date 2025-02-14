@@ -9,6 +9,10 @@
 #include "../../devices/cuda/cuda_handle.h"
 #include "cuda/global_avg_pool.cuh"
 #endif
+#ifdef ENABLE_MT_GPU
+#include "../../devices/musa/musa_handle.h"
+#include "musa/global_avg_pool_musa.h"
+#endif
 #ifdef ENABLE_CAMBRICON_MLU
 // TODO: Cambricon
 #endif
@@ -29,6 +33,12 @@ __C infiniopStatus_t infiniopCreateGlobalAvgPoolDescriptor(
         }
 
 #endif
+#ifdef ENABLE_MT_GPU
+        case DevMtGpu: {
+            return musaCreateGlobalAvgPoolDescriptor((MusaHandle_t) handle, (GlobalAvgPoolMusaDescriptor_t *) desc_ptr, y, x);
+        }
+#endif
+
 #ifdef ENABLE_CAMBRICON_MLU
         // TODO
 #endif
@@ -45,6 +55,12 @@ __C infiniopStatus_t infiniopGetGlobalAvgPoolWorkspaceSize(infiniopGlobalAvgPool
 #ifdef ENABLE_NV_GPU
         case DevNvGpu: {
             return cudaGetGlobalAvgPoolWorkspaceSize((GlobalAvgPoolCudaDescriptor_t) desc, size);
+        }
+
+#endif
+#ifdef ENABLE_MT_GPU
+        case DevMtGpu: {
+            return musaGetGlobalAvgPoolWorkspaceSize((GlobalAvgPoolMusaDescriptor_t) desc, size);
         }
 
 #endif
@@ -68,6 +84,12 @@ __C infiniopStatus_t infiniopGlobalAvgPool(infiniopGlobalAvgPoolDescriptor_t des
         }
 
 #endif
+#ifdef ENABLE_MT_GPU
+        case DevMtGpu: {
+            return musaGlobalAvgPool((GlobalAvgPoolMusaDescriptor_t) desc, workspace, workspace_size, y, x, stream);
+        }
+
+#endif
 #ifdef ENABLE_CAMBRICON_MLU
         // TODO
 #endif
@@ -84,6 +106,12 @@ __C infiniopStatus_t infiniopDestroyGlobalAvgPoolDescriptor(infiniopGlobalAvgPoo
 #ifdef ENABLE_NV_GPU
         case DevNvGpu: {
             return cudaDestroyGlobalAvgPoolDescriptor((GlobalAvgPoolCudaDescriptor_t) desc);
+        }
+
+#endif
+#ifdef ENABLE_MT_GPU
+        case DevMtGpu: {
+            return musaDestroyGlobalAvgPoolDescriptor((GlobalAvgPoolMusaDescriptor_t) desc);
         }
 
 #endif

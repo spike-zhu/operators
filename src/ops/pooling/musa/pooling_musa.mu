@@ -12,6 +12,7 @@ infiniopStatus_t pooling_mt_gpu(PoolingMusaDescriptor_t desc, void *y, void cons
         desc->pool_operator->Run(*handle, *(desc->y_tensor), *(desc->x_tensor), *(desc->indices_tensor));
     });
 
+    printf("[SUCCESS to execute pooling_mt_gpu]\n");
     return STATUS_SUCCESS;
 }
 

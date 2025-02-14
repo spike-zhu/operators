@@ -201,6 +201,29 @@ def test_cuda(lib, test_cases):
         test(lib, handle, "cuda", alpha, beta, transA, transB, a_shape, b_shape, c_shape, y_shape, a_stride, b_stride, c_stride, y_stride, dtype=torch.float32)
     destroy_handle(lib, handle)
 
+def test_musa(lib, test_cases):
+    import torch_musa
+    
+    device = DeviceEnum.DEVICE_MUSA
+    handle = create_handle(lib, device)
+    for (
+        alpha,
+        beta,
+        transA,
+        transB,
+        a_shape,
+        b_shape,
+        c_shape,
+        y_shape,
+        a_stride,
+        b_stride,
+        c_stride,
+        y_stride,
+    ) in test_cases:
+        # test(lib, handle, "musa", alpha, beta, transA, transB, a_shape, b_shape, c_shape, y_shape, a_stride, b_stride, c_stride, y_stride, dtype=torch.float16)
+        test(lib, handle, "musa", alpha, beta, transA, transB, a_shape, b_shape, c_shape, y_shape, a_stride, b_stride, c_stride, y_stride, dtype=torch.float32)
+    destroy_handle(lib, handle)
+
 
 def test_bang(lib, test_cases):
     import torch_mlu
@@ -362,6 +385,8 @@ if __name__ == "__main__":
         test_cuda(lib, test_cases)
     if args.bang:
         test_bang(lib, test_cases)
-    if not (args.cpu or args.cuda or args.bang):
+    if args.musa:
+        test_musa(lib, test_cases)
+    if not (args.cpu or args.cuda or args.musa or args.bang):
         test_cpu(lib, test_cases)
     print("\033[92mTest passed!\033[0m")

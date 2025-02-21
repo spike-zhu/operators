@@ -46,6 +46,7 @@ inline musa::dnn::Pooling::Mode getPoolingMode(int pooling_type) {
             return musa::dnn::Pooling::Mode::MAXPOOL;
         case 1:
             return musa::dnn::Pooling::Mode::AVGPOOL_COUNT_PAD;
+            // return musa::dnn::Pooling::Mode::AVGPOOL_COUNT_WITHOUT_PAD;
         default:
             return musa::dnn::Pooling::Mode::MAXPOOL;
     }

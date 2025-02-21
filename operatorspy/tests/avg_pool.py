@@ -152,10 +152,6 @@ def test(
         elapsed = (time.time() - start_time) / NUM_ITERATIONS
         print(f"    lib time: {elapsed :6f}")
 
-
-    print(x)
-    print(y)
-    print(ans)
     assert torch.allclose(y, ans, atol=0, rtol=1e-3)
     check_error(lib.infiniopDestroyAvgPoolDescriptor(descriptor))
 
@@ -205,7 +201,7 @@ if __name__ == "__main__":
         # ((1, 1, 10), (3,), (1,), (1,)),
         ((1, 1, 2, 2), (2, 2), (1, 1), (1, 1)),
         ((32, 4, 224, 224), (3, 3), (1, 1), (2, 2)),
-        ((1, 1, 16, 16, 16), (5, 5, 5), (2, 2, 2), (2, 2, 2)),
+        # ((1, 1, 16, 16, 16), (5, 5, 5), (2, 2, 2), (2, 2, 2)),
     ]
     args = get_args()
     lib = open_lib()

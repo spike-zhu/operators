@@ -1,11 +1,11 @@
 #include "causal_softmax.cuh"
-#include "../../utils.h"
 #include "../../../devices/cuda/common_cuda.h"
+#include "../../utils.h"
 
 infiniopStatus_t cudaCreateCausalSoftmaxDescriptor(CudaHandle_t handle,
                                                    CausalSoftmaxCudaDescriptor_t *desc_ptr,
                                                    infiniopTensorDescriptor_t y) {
-    unsigned long int ndim = y->ndim;
+    uint64_t ndim = y->ndim;
     // TODO: only support 2d or 3d tensor
     if (ndim != 2 && ndim != 3) {
         return STATUS_BAD_TENSOR_SHAPE;
@@ -13,12 +13,12 @@ infiniopStatus_t cudaCreateCausalSoftmaxDescriptor(CudaHandle_t handle,
     if (!dtype_eq(y->dt, F16)) {
         return STATUS_BAD_TENSOR_DTYPE;
     }
-    unsigned long int total_seq_len = y->shape[ndim - 1];
-    unsigned long int seq_len = y->shape[ndim - 2];
-    unsigned long int batch_size = 1;
-    unsigned long int stride_b = 0;
-    unsigned long int stride_i = y->strides[ndim - 2];
-    unsigned long int stride_j = y->strides[ndim - 1];
+    uint64_t total_seq_len = y->shape[ndim - 1];
+    uint64_t seq_len = y->shape[ndim - 2];
+    uint64_t batch_size = 1;
+    uint64_t stride_b = 0;
+    uint64_t stride_i = y->strides[ndim - 2];
+    uint64_t stride_j = y->strides[ndim - 1];
     if (stride_j != 1) {
         return STATUS_BAD_TENSOR_STRIDES;
     }
@@ -44,7 +44,7 @@ infiniopStatus_t cudaCreateCausalSoftmaxDescriptor(CudaHandle_t handle,
     return STATUS_SUCCESS;
 }
 
-infiniopStatus_t cudaGetCausalSoftmaxWorkspaceSize(CausalSoftmaxCudaDescriptor_t desc, unsigned long int *size) {
+infiniopStatus_t cudaGetCausalSoftmaxWorkspaceSize(CausalSoftmaxCudaDescriptor_t desc, uint64_t *size) {
     *size = 0;
     return STATUS_SUCCESS;
 }

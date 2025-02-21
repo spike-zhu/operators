@@ -20,11 +20,11 @@ infiniopStatus_t bangCreateRandomSampleDescriptor(BangHandle_t handle,
                                                   RandomSampleBangDescriptor_t *desc_ptr, infiniopTensorDescriptor_t result,
                                                   infiniopTensorDescriptor_t probs);
 
-infiniopStatus_t bangGetRandomSampleWorkspaceSize(RandomSampleBangDescriptor_t desc, unsigned long int *size);
+infiniopStatus_t bangGetRandomSampleWorkspaceSize(RandomSampleBangDescriptor_t desc, uint64_t *size);
 
 infiniopStatus_t bangRandomSample(RandomSampleBangDescriptor_t desc,
                                   void *workspace,
-                                  unsigned long int workspace_size,
+                                  uint64_t workspace_size,
                                   void *result,
                                   void const *probs,
                                   float random_val,

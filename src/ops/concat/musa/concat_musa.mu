@@ -1,8 +1,8 @@
-#include "../../../devices/cuda/common_cuda.h"
+#include "../../../devices/musa/common_musa.h"
 #include "../../utils.h"
-#include "concat.cuh"
+#include "concat_musa.h"
 
-// Kernel function to perform concatenation on NvGPU
+// Kernel function to perform concatenation on MtGPU
 template <typename T>
 __global__ void concatKernel(const T* x, T* y,
                              size_t inSize, 
@@ -18,10 +18,10 @@ __global__ void concatKernel(const T* x, T* y,
 }
 
 template <typename T>
-infiniopStatus_t concatCompute(ConcatCudaDescriptor_t& desc,
+infiniopStatus_t concatCompute(ConcatMusaDescriptor_t& desc,
                                T* y,
                                void const** x,
-                               cudaStream_t stream) {
+                               musaStream_t stream) {
     int64_t axis = desc->axis;
     uint64_t num_inputs = desc->num_inputs;
     const std::vector<std::vector<uint64_t>>& input_shapes = desc->input_shapes;
@@ -55,14 +55,14 @@ infiniopStatus_t concatCompute(ConcatCudaDescriptor_t& desc,
 
         T* input_data = static_cast<T*>(const_cast<void*>(x[i]));
 
-        // Launch CUDA kernel
+        // Launch MUSA kernel
         int threads = 256;
         int blocks = (inSize + threads - 1) / threads;
         concatKernel<<<blocks, threads, 0, stream>>>(input_data, y, inSize, localBlockOffset, innerOffset, blockOffset);
 
-        // Check for CUDA errors
-        cudaError_t err = cudaGetLastError();
-        if (err != cudaSuccess) {
+        // Check for MUSA errors
+        musaError_t err = musaGetLastError();
+        if (err != musaSuccess) {
             return STATUS_EXECUTION_FAILED;
         }
     }
@@ -70,17 +70,17 @@ infiniopStatus_t concatCompute(ConcatCudaDescriptor_t& desc,
     return STATUS_SUCCESS;
 }
 
-infiniopStatus_t cudaConcat(ConcatCudaDescriptor_t desc,
+infiniopStatus_t musaConcat(ConcatMusaDescriptor_t desc,
                             void* y,
                             void const** x,
                             void* stream) {
-    cudaStream_t cudaStream = reinterpret_cast<cudaStream_t>(stream);
+    musaStream_t musaStream = reinterpret_cast<musaStream_t>(stream);
 
     if (desc->dtype == F16) {
-        return concatCompute<uint16_t>(desc, reinterpret_cast<uint16_t*>(y), x, cudaStream);
+        return concatCompute<uint16_t>(desc, reinterpret_cast<uint16_t*>(y), x, musaStream);
     }
     if (desc->dtype == F32) {
-        return concatCompute<float>(desc, reinterpret_cast<float*>(y), x, cudaStream);
+        return concatCompute<float>(desc, reinterpret_cast<float*>(y), x, musaStream);
     }
     return STATUS_BAD_TENSOR_DTYPE;
 }

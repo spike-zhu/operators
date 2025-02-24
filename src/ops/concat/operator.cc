@@ -9,6 +9,10 @@
 #include "../../devices/cuda/cuda_handle.h"
 #include "cuda/concat.cuh"
 #endif
+#ifdef ENABLE_MT_GPU
+#include "../../devices/musa/musa_handle.h"
+#include "musa/concat_musa.h"
+#endif
 
 __C infiniopStatus_t infiniopCreateConcatDescriptor(
     infiniopHandle_t handle,
@@ -27,6 +31,11 @@ __C infiniopStatus_t infiniopCreateConcatDescriptor(
             return cudaCreateConcatDescriptor((CudaHandle_t) handle, (ConcatCudaDescriptor_t *) desc_ptr, y, x, num_inputs, axis);
         }
 #endif
+#ifdef ENABLE_MT_GPU
+        case DevMtGpu:{
+            return musaCreateConcatDescriptor((MusaHandle_t) handle, (ConcatMusaDescriptor_t *) desc_ptr, y, x, num_inputs, axis);
+        }
+#endif
     }
     return STATUS_BAD_DEVICE;
 }
@@ -40,11 +49,20 @@ __C infiniopStatus_t infiniopConcat(infiniopConcatDescriptor_t desc, void *y, vo
 #endif
 #ifdef ENABLE_NV_GPU
         case DevNvGpu: {
+            printf("[INTO ENABLE_NV_GPU]\n");
             return cudaConcat((ConcatCudaDescriptor_t) desc, y, x, stream);
         }
+
 #endif
+#ifdef ENABLE_MT_GPU
+        case DevMtGpu: {
+
+            return musaConcat((ConcatMusaDescriptor_t) desc, y, x, stream);
+        }
+#endif
+
     }
-    return STATUS_BAD_DEVICE;
+    return STATUS_BAD_TENSOR_SHAPE;
 }
 
 
@@ -57,6 +75,11 @@ __C infiniopStatus_t infiniopDestroyConcatDescriptor(infiniopConcatDescriptor_t 
 #ifdef ENABLE_NV_GPU
         case DevNvGpu: {
             return cudaDestroyConcatDescriptor((ConcatCudaDescriptor_t) desc);
+        }
+#endif
+#ifdef ENABLE_MT_GPU
+        case DevMtGpu: {
+            return musaDestroyConcatDescriptor((ConcatMusaDescriptor_t) desc);
         }
 #endif
     }

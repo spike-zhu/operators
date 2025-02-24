@@ -223,14 +223,14 @@ def test_musa(lib, test_cases):
 if __name__ == "__main__":
     test_cases = [
         # x_shape, w_shape, pads, strides, dilations, x_strides
-        # (
-        #     (32, 3, 4),
-        #     (32, 3, 5),
-        #     (1,),
-        #     (1,),
-        #     (1,),
-        #     None,
-        # ),
+        (
+            (32, 3, 4),
+            (32, 3, 5),
+            (1,),
+            (1,),
+            (1,),
+            None,
+        ),
         (
             (1, 3, 4, 4),
             (2, 3, 3, 3),

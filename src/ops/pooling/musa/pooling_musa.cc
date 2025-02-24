@@ -32,44 +32,73 @@ infiniopStatus_t musaCreatePoolingDescriptor(MusaHandle_t handle,
         return STATUS_BAD_TENSOR_DTYPE;
     }
 
-    float alpha = 1.0f, beta = 0.0f;
+    const uint64_t new_ndim = ndim;
 
-    const auto kernel_ = reinterpret_cast<int const *>(kernel_shape);
-    const auto pads_ = reinterpret_cast<int const *>(pads);
-    const auto strides_ = reinterpret_cast<int const *>(strides);
+    int64_t *x_shape = new int64_t[new_ndim];
+    int64_t *y_shape = new int64_t[new_ndim];
+    for(size_t i = 0; i < new_ndim; ++i){
+        x_shape[i] = static_cast<int64_t>(x->shape[i]);
+        y_shape[i] = static_cast<int64_t>(y->shape[i]);
 
-    const auto x_shape = reinterpret_cast<int64_t const *>(x->shape);
-    const auto x_strides = reinterpret_cast<int64_t const *>(x->strides);
-    const auto y_shape = reinterpret_cast<int64_t const *>(y->shape);
-    const auto y_strides = reinterpret_cast<int64_t const *>(y->strides);
+    }
 
     musa::dnn::Tensor *x_tensor = new musa::dnn::Tensor();
     musa::dnn::Tensor *y_tensor = new musa::dnn::Tensor();
-    musa::dnn::Tensor *indices_tensor = new musa::dnn::Tensor();
+    musa::dnn::Tensor *indices = new musa::dnn::Tensor(); 
+
+    x_tensor->SetNdInfo((int)new_ndim, x_shape);
+    y_tensor->SetNdInfo((int)new_ndim, y_shape);
+    indices->SetNdInfo((int)new_ndim, y_shape);
 
     if (y->dt == F16) {
         x_tensor->SetType(musa::dnn::Tensor::Type::HALF);
         y_tensor->SetType(musa::dnn::Tensor::Type::HALF);
+        indices->SetType(musa::dnn::Tensor::Type::HALF);
     } else if (y->dt == F32) {
         x_tensor->SetType(musa::dnn::Tensor::Type::FLOAT);
         y_tensor->SetType(musa::dnn::Tensor::Type::FLOAT);
+        indices->SetType(musa::dnn::Tensor::Type::FLOAT);
     }
 
-    x_tensor->SetFormat(musa::dnn::Tensor::Format::NCHW);
-    y_tensor->SetFormat(musa::dnn::Tensor::Format::NCHW);
+    if (new_ndim == 5) {
+        x_tensor->SetFormat(musa::dnn::Tensor::Format::NCDHW);
+        y_tensor->SetFormat(musa::dnn::Tensor::Format::NCDHW);
+        indices->SetFormat(musa::dnn::Tensor::Format::NCDHW);
+    }
+    else if (new_ndim == 4) {
+        x_tensor->SetFormat(musa::dnn::Tensor::Format::NCHW);
+        y_tensor->SetFormat(musa::dnn::Tensor::Format::NCHW);
+        indices->SetFormat(musa::dnn::Tensor::Format::NCHW);
+    }
+    else if (new_ndim == 3) {
+        x_tensor->SetFormat(musa::dnn::Tensor::Format::NCW);
+        y_tensor->SetFormat(musa::dnn::Tensor::Format::NCW);
+        indices->SetFormat(musa::dnn::Tensor::Format::NCW);
+    }
+    else {
+        return STATUS_BAD_TENSOR_SHAPE;
+    }
 
-    x_tensor->SetNdInfo((int) ndim, x_shape, x_strides);
-    y_tensor->SetNdInfo((int) ndim, y_shape, y_strides);
-
-    int *indice = new int[ndim];
-
+    musa::dnn::Status status;
     musa::dnn::Pooling* pooling_operator = new musa::dnn::Pooling();
-    pooling_operator->SetMode(getPoolingMode(pooling_type));
 
-    int* dilation_ = new int[n];
-    std::fill(dilation_, dilation_+((int) n), 1);
+    status = pooling_operator->SetMode(getPoolingMode(pooling_type));
+    // if (status == musa::dnn::Status::SUCCESS) {
+    //     printf("pool_desc SetMode status:%d\n", static_cast<int>(status));
+    // }
 
-    pooling_operator->SetNdInfo((int) n, kernel_, pads_, strides_, (const int*) dilation_);
+    std::initializer_list<int> kernel = {static_cast<int>(kernel_shape[0]), static_cast<int>(kernel_shape[1])};
+    std::initializer_list<int> pad = {static_cast<int>(pads[0]), static_cast<int>(pads[1])};
+    std::initializer_list<int> stride = {static_cast<int>(strides[0]), static_cast<int>(strides[1])};
+    std::initializer_list<int> dilationList = {1, 1};
+
+    status = pooling_operator->SetNdInfo(kernel, pad, stride, dilationList);
+    // if (status == musa::dnn::Status::SUCCESS) {
+    //     printf("pool_desc SetNdInfo status:%d\n", static_cast<int>(status));
+    // }
+
+    const float alpha = 1.0f;
+    const float beta = 0.0f;
 
     *desc_ptr = new PoolingMusaDescriptor{
         DevMtGpu,
@@ -78,11 +107,14 @@ infiniopStatus_t musaCreatePoolingDescriptor(MusaHandle_t handle,
         handle->mudnn_handles_t,
         x_tensor,
         y_tensor,
-        indices_tensor,
+        indices,
         pooling_operator,
         alpha,
         beta,
     };
+
+    delete[] x_shape;
+    delete[] y_shape;
     
     return STATUS_SUCCESS;
 }

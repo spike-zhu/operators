@@ -84,6 +84,7 @@ void _add_mt_gpu(AddMusaDescriptor_t desc, Tdata *c, Tdata const *a, Tdata const
         add<Tdata, BTdata><<<gridDims, blockDims, 0, musa_stream>>>(
             c, a, b, desc->a_strides, desc->b_strides, desc->c_strides, offset + data_size, desc->ndim, offset + i, desc->broadcasted, pack_size);
     }
+    printf("[SUCCESS to execute add_mt_gpu]\n");
 }
 
 template<typename Tdata, typename TIdata>

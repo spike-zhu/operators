@@ -19,6 +19,7 @@ struct ConvMusaDescriptor {
     const float alpha;
     const float beta;
     uint64_t workspace_size;
+    musa::dnn::MemoryMaintainer maintainer;
 };
 
 typedef struct ConvMusaDescriptor *ConvMusaDescriptor_t;

@@ -1,7 +1,6 @@
 #include "conv_musa.h"
 #include "../../../devices/musa/common_musa.h"
 #include "../../utils.h"
-#include <vector>
 
 infiniopStatus_t musaCreateConvDescriptor(MusaHandle_t handle,
                                           ConvMusaDescriptor_t *desc_ptr,
@@ -16,6 +15,9 @@ infiniopStatus_t musaCreateConvDescriptor(MusaHandle_t handle,
     if (ndim < 3 || ndim != x->ndim || ndim != w->ndim) {
         return STATUS_BAD_TENSOR_SHAPE;
     }
+    if (ndim > 5 ) {
+        return STATUS_BAD_TENSOR_SHAPE;
+    }
     if (x->shape[0] != y->shape[0] || w->shape[0] != y->shape[1] || x->shape[1] != w->shape[1]) {
         return STATUS_BAD_TENSOR_SHAPE;
     }
@@ -26,11 +28,11 @@ infiniopStatus_t musaCreateConvDescriptor(MusaHandle_t handle,
         return STATUS_BAD_TENSOR_DTYPE;
     }
 
-    const auto new_ndim = std::max(4UL, ndim);
+    const uint64_t new_ndim = std::max(ndim, (uint64_t)4);
     // convert pads, strides, dilations into int32[]
-    int *pad = new int[new_ndim];
-    int *stride = new int[new_ndim];
-    int *dilation = new int[new_ndim];
+    int32_t *pad = new int32_t[new_ndim];
+    int32_t *stride = new int32_t[new_ndim];
+    int32_t *dilation = new int32_t[new_ndim];
     int64_t *x_shape = new int64_t[new_ndim];
     int64_t *w_shape = new int64_t[new_ndim];
     int64_t *y_shape = new int64_t[new_ndim];
@@ -60,28 +62,74 @@ infiniopStatus_t musaCreateConvDescriptor(MusaHandle_t handle,
         w_tensor->SetType(musa::dnn::Tensor::Type::FLOAT);
     }
 
-    x_tensor->SetFormat(musa::dnn::Tensor::Format::NCHW);
-    y_tensor->SetFormat(musa::dnn::Tensor::Format::NCHW);
-    w_tensor->SetFormat(musa::dnn::Tensor::Format::NCHW);
+    if (new_ndim == 5) {
+        x_tensor->SetFormat(musa::dnn::Tensor::Format::NCDHW);
+        y_tensor->SetFormat(musa::dnn::Tensor::Format::NCDHW);
+    }
+    else if (new_ndim == 4) {
+        x_tensor->SetFormat(musa::dnn::Tensor::Format::NCHW);
+        y_tensor->SetFormat(musa::dnn::Tensor::Format::NCHW);
+    }
+    else if (new_ndim == 3) {
+        x_tensor->SetFormat(musa::dnn::Tensor::Format::NCW);
+        y_tensor->SetFormat(musa::dnn::Tensor::Format::NCW);
+    }
+    else {
+        return STATUS_BAD_TENSOR_SHAPE;
+    }
 
     x_tensor->SetNdInfo((int) new_ndim, x_shape);
     y_tensor->SetNdInfo((int) new_ndim, y_shape);
     w_tensor->SetNdInfo((int) new_ndim, w_shape);
 
-    musa::dnn::Convolution* conv_operator = new musa::dnn::Convolution();
-    conv_operator->SetNdInfo((int) new_ndim-2, pad, stride, dilation);
-    musa::dnn::Convolution::Algorithm algo = musa::dnn::Convolution::Algorithm::DIRECT;
-    size_t workspace_size = 0;
+    // musa::dnn::Status status1 = y_tensor->SetNdInfo((int) new_ndim, y_shape);
+    // if (status1 == musa::dnn::Status::SUCCESS) {
+    //     std::cerr << "Success to set y_tensor." << std::endl;
+    // }
 
-    use_mudnn(handle->mudnn_handles_t, handle->device_id, nullptr, [&](musa::dnn::Handle* handle) {
-        printf(" %d \n", conv_operator->GetRecommendForwardAlgorithm(*handle, algo, *y_tensor, *x_tensor, *w_tensor));
-        // printf(" %d \n", conv_operator->GetForwardWorkspaceSize(*handle, workspace_size, *y_tensor, *x_tensor, *w_tensor, algo));
-    });
+    // 设置卷积的填充、步长和膨胀
+    musa::dnn::Convolution* conv_operator = new musa::dnn::Convolution();
+    musa::dnn::Status status2 = conv_operator->SetNdInfo(new_ndim - 2, pad, stride, dilation);
+    // if (status2 == musa::dnn::Status::SUCCESS) {
+    //     std::cerr << "Success to set convolution dimensions." << std::endl;
+    // }
+
+    musa::dnn::Status status3 = conv_operator->SetComputeMode(musa::dnn::Convolution::ComputeMode::TENSOR);
+    // if (status3 == musa::dnn::Status::SUCCESS) {
+    //     std::cerr << "Success to set compute mode." << std::endl;
+    //     // printf("status3: %s\n",status3);
+    //     printf("SetComputeMode Status:%d\n", static_cast<int>(status3));
+    // }    
+
+    musa::dnn::Convolution::Algorithm algo = musa::dnn::Convolution::Algorithm::DIRECT;
+
+
+    use_mudnn(handle->mudnn_handles_t, handle->device_id, nullptr, 
+                [&](musa::dnn::Handle* handle) {conv_operator->GetRecommendForwardAlgorithm(*handle, algo, *y_tensor, *x_tensor, *w_tensor);});
+
+    size_t workspace_size = 2;
+    // printf("workspace_size before: %zu\n", workspace_size);
+
+    use_mudnn(handle->mudnn_handles_t, handle->device_id, nullptr, 
+                [&](musa::dnn::Handle* handle) {
+                musa::dnn::Status status = conv_operator->GetForwardWorkspaceSize(*handle, workspace_size, *y_tensor, *x_tensor, *w_tensor, algo);
+                // printf("GetForwardWorkspaceSize status: %d\n", static_cast<int>(status));
+            });
+
+    // printf("workspace_size after: %zu\n", workspace_size);
+
     const float alpha = 1.0f;
     const float beta = 0.0f;
-    printf("after: %d\n", algo);
 
-    printf("A\n");
+    musa::dnn::MemoryMaintainer maintainer = [](size_t size) -> musa::dnn::MemoryHandler {
+        void* ptr = nullptr;
+        musaMalloc(&ptr, size);  
+        return musa::dnn::MemoryHandler(ptr, [](void* p) {
+            if (p) musaFree(p); 
+        });
+    };
+
+    // musa::dnn::MemoryHandler workspace_mem  = maintainer(workspace_size);
 
     *desc_ptr = new ConvMusaDescriptor{
         DevMtGpu,
@@ -95,7 +143,9 @@ infiniopStatus_t musaCreateConvDescriptor(MusaHandle_t handle,
         algo,
         alpha,
         beta,
-        workspace_size};
+        workspace_size,
+        maintainer
+        };
 
     delete[] pad;
     delete[] stride;

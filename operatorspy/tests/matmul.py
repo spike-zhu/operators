@@ -383,6 +383,6 @@ if __name__ == "__main__":
         test_ascend(lib, test_cases)
     if args.musa:
         test_musa(lib, test_cases)
-    if not (args.cpu or args.cuda or args.bang or args.ascend):
+    if not (args.cpu or args.cuda or args.musa or args.bang or args.ascend):
         test_cpu(lib, test_cases)
     print("\033[92mTest passed!\033[0m")

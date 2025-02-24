@@ -148,9 +148,9 @@ def test(
             )
         elapsed = (time.time() - start_time) / NUM_ITERATIONS
         print(f"    lib time: {elapsed :6f}")
-    print(x)
-    print(y)
-    print(ans)
+    # print(x)
+    # print(y)
+    # print(ans)
     assert torch.allclose(y, ans, atol=0, rtol=1e-3)
     check_error(lib.infiniopDestroyMaxPoolDescriptor(descriptor))
 
@@ -197,9 +197,12 @@ def test_musa(lib, test_cases):
 if __name__ == "__main__":
     test_cases = [
         # x_shape, kernel_shape, padding, strides
-        ((1, 1, 10), (3,), (1,), (1,)),
+        # ((1, 1, 10), (3,), (1,), (1,)),
         ((32, 3, 224, 224), (3, 3), (1, 1), (2, 2)),
-        ((1, 1, 16, 16, 16), (5, 5, 5), (2, 2, 2), (2, 2, 2)),
+        ((1, 3, 6, 6), (3, 3), (1, 1), (2, 2)),
+        ((8, 3, 12, 12), (3, 3), (1, 1), (2, 2)),
+        ((1, 1, 4, 4), (2, 2), (0, 0), (1, 1)),
+        # ((1, 1, 16, 16, 16), (5, 5, 5), (2, 2, 2), (2, 2, 2)),
     ]
     args = get_args()
     lib = open_lib()

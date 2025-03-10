@@ -14,8 +14,6 @@ infiniopStatus_t global_avg_pool_mt_gpu(GlobalAvgPoolMusaDescriptor_t desc, void
         desc->pool_desc->Run(*handle, *(desc->y_desc), *(desc->x_desc), *(desc->indices));
     });
 
-    printf("[SUCCESS to execute global_avg_pool_mt_gpu]\n");
-
     return STATUS_SUCCESS;
 }
 

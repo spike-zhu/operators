@@ -83,9 +83,9 @@ infiniopStatus_t musaCreatePoolingDescriptor(MusaHandle_t handle,
     musa::dnn::Pooling* pooling_operator = new musa::dnn::Pooling();
 
     status = pooling_operator->SetMode(getPoolingMode(pooling_type));
-    // if (status == musa::dnn::Status::SUCCESS) {
-    //     printf("pool_desc SetMode status:%d\n", static_cast<int>(status));
-    // }
+    if (status != musa::dnn::Status::SUCCESS) {
+        printf("pool_desc SetMode status:%d\n", static_cast<int>(status));
+    }
 
     std::initializer_list<int> kernel = {static_cast<int>(kernel_shape[0]), static_cast<int>(kernel_shape[1])};
     std::initializer_list<int> pad = {static_cast<int>(pads[0]), static_cast<int>(pads[1])};
@@ -93,9 +93,9 @@ infiniopStatus_t musaCreatePoolingDescriptor(MusaHandle_t handle,
     std::initializer_list<int> dilationList = {1, 1};
 
     status = pooling_operator->SetNdInfo(kernel, pad, stride, dilationList);
-    // if (status == musa::dnn::Status::SUCCESS) {
-    //     printf("pool_desc SetNdInfo status:%d\n", static_cast<int>(status));
-    // }
+    if (status != musa::dnn::Status::SUCCESS) {
+        printf("pool_desc SetNdInfo status:%d\n", static_cast<int>(status));
+    }
 
     const float alpha = 1.0f;
     const float beta = 0.0f;

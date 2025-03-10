@@ -77,7 +77,7 @@ infiniopStatus_t musaCreateGlobalAvgPoolDescriptor(MusaHandle_t handle,
 
 
     int N = x_shape[0];  // batch size
-    int C = x_shape[1];  // channels
+    int C = x_shape[1];  // channelspytho
     int D = x_shape[2];
     int H = x_shape[3];  // height
     int W = x_shape[4];  // width
@@ -91,24 +91,6 @@ infiniopStatus_t musaCreateGlobalAvgPoolDescriptor(MusaHandle_t handle,
     musa::dnn::Pooling *pool_desc = new musa::dnn::Pooling();
 
     status = pool_desc->SetMode(musa::dnn::Pooling::Mode::GLOBAL_AVGPOOL);
-    // if (status == musa::dnn::Status::SUCCESS) {
-    //     printf("pool_desc SetMode status:%d\n", static_cast<int>(status));
-    // }
-
-    // status = pool_desc->SetNdInfo(3, kernel, pad, stride, dilation);
-    // if (status == musa::dnn::Status::SUCCESS) {
-    //     printf("pool_desc SetNdInfo status:%d\n", static_cast<int>(status));
-    // }
-
-    // status = pool_desc->SetNdInfo({H}, {0}, {H}, {1});
-    // if (status == musa::dnn::Status::SUCCESS) {
-    //     printf("pool_desc SetNdInfo status:%d\n", static_cast<int>(status));
-    // }
-
-    // status = pool_desc->SetDivisor(H * W);
-    // if (status == musa::dnn::Status::SUCCESS) {
-    //     printf("pool_desc SetDivisor status:%d\n", static_cast<int>(status));
-    // }
 
     const float alpha = 1.0f;
     const float beta = 0.0f;

@@ -13,8 +13,6 @@ infiniopStatus_t conv_mt_gpu(ConvMusaDescriptor_t desc, void *workspace, uint64_
         desc->conv_operator->Run(*handle, *(desc->y_tensor), *(desc->x_tensor), *(desc->w_tensor), desc->algo, desc->maintainer);
     });
 
-    printf("[SUCCESS to execute conv_mt_gpu]\n");
-
     return STATUS_SUCCESS;
 }
 
